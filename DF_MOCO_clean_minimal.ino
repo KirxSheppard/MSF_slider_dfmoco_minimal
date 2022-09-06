@@ -1,10 +1,10 @@
 #define DFMOCO_VERSION 1
 #define DFMOCO_VERSION_STRING "1.3.1"
 #include "includes/tmc5160_driver.h"
-// #include "includes/lcd_driver.h"
+#include "includes/lcd_driver.h"
 
 SetupTmc5160 spiDriver(8, 0.075f, 11, 12, 13);
-// Lcd_driver lcd(0x27, 2, 16);
+Lcd_driver lcd(0x27, 2, 16);
 
 /*
   DFMoco version 1.3.1
@@ -50,17 +50,15 @@ SetupTmc5160 spiDriver(8, 0.075f, 11, 12, 13);
   Pin configuration:
   
   channel 1
-        PIN   4   step
-        PIN   5   direction
+        PIN   2   step
+        PIN   3   direction
   channel 2
-        PIN   6   step
-        PIN   7   direction
+        PIN   9   step
+        PIN   10   direction
   channel 3
-        PIN   8   step
-        PIN   9   direction
-  channel 4
-        PIN  10   step
-        PIN  11   direction
+        PIN   5   step
+        PIN   6   direction
+
 
   channel 5
         PIN  28   step
@@ -201,23 +199,18 @@ SetupTmc5160 spiDriver(8, 0.075f, 11, 12, 13);
 #elif defined(BOARD_UNO)
 
   #define MOTOR0_STEP_PORT PORTD
-  // #define MOTOR0_STEP_PIN  B00010000
   #define MOTOR0_STEP_PIN  B00000100
   
   #define MOTOR1_STEP_PORT PORTB
-  // #define MOTOR1_STEP_PIN  B01000000
   #define MOTOR1_STEP_PIN B00000010
 
   #define MOTOR2_STEP_PORT PORTD
-  // #define MOTOR2_STEP_PIN  B00000001
   #define MOTOR2_STEP_PIN B00100000
 
   // #define MOTOR3_STEP_PORT PORTB
   // #define MOTOR3_STEP_PIN  B00010000
 
 #endif
-
-
 
 /**
  * Serial output specialization
@@ -319,33 +312,32 @@ uint16_t           motorAccumulator0;
 uint16_t           motorAccumulator1;
 uint16_t           motorAccumulator2;
 // uint16_t           motorAccumulator3;
-#if MOTOR_COUNT > 4
-uint16_t           motorAccumulator4;
-uint16_t           motorAccumulator5;
-uint16_t           motorAccumulator6;
-uint16_t           motorAccumulator7;
-#endif
+// #if MOTOR_COUNT > 4
+// uint16_t           motorAccumulator4;
+// uint16_t           motorAccumulator5;
+// uint16_t           motorAccumulator6;
+// uint16_t           motorAccumulator7;
+// #endif
 uint16_t*          motorAccumulator[MOTOR_COUNT] =
 {
-  &motorAccumulator0, &motorAccumulator1, &motorAccumulator2/*, &motorAccumulator3*/, 
-#if MOTOR_COUNT > 4
-  &motorAccumulator4, &motorAccumulator5, &motorAccumulator6, &motorAccumulator7 
-#endif
+  &motorAccumulator0, &motorAccumulator1, &motorAccumulator2, 
+// #if MOTOR_COUNT > 4
+//   &motorAccumulator4, &motorAccumulator5, &motorAccumulator6, &motorAccumulator7 
+// #endif
 };
 
 uint16_t           motorMoveSteps0;
 uint16_t           motorMoveSteps1;
 uint16_t           motorMoveSteps2;
-// uint16_t           motorMoveSteps3;
-#if MOTOR_COUNT > 4
-uint16_t           motorMoveSteps4;
-uint16_t           motorMoveSteps5;
-uint16_t           motorMoveSteps6;
-uint16_t           motorMoveSteps7;
-#endif
+// #if MOTOR_COUNT > 4
+// uint16_t           motorMoveSteps4;
+// uint16_t           motorMoveSteps5;
+// uint16_t           motorMoveSteps6;
+// uint16_t           motorMoveSteps7;
+// #endif
 uint16_t*          motorMoveSteps[MOTOR_COUNT] =
 {
-  &motorMoveSteps0, &motorMoveSteps1, &motorMoveSteps2/*, &motorMoveSteps3*/,
+  &motorMoveSteps0, &motorMoveSteps1, &motorMoveSteps2,
 #if MOTOR_COUNT > 4
   &motorMoveSteps4, &motorMoveSteps5, &motorMoveSteps6, &motorMoveSteps7
 #endif
@@ -355,19 +347,15 @@ uint16_t*          motorMoveSteps[MOTOR_COUNT] =
 uint16_t           motorMoveSpeed0;
 uint16_t           motorMoveSpeed1;
 uint16_t           motorMoveSpeed2;
-// uint16_t           motorMoveSpeed3;
-#if MOTOR_COUNT > 4
-uint16_t           motorMoveSpeed4;
-uint16_t           motorMoveSpeed5;
-uint16_t           motorMoveSpeed6;
-uint16_t           motorMoveSpeed7;
-#endif
+// #if MOTOR_COUNT > 4
+// uint16_t           motorMoveSpeed4;
+// uint16_t           motorMoveSpeed5;
+// uint16_t           motorMoveSpeed6;
+// uint16_t           motorMoveSpeed7;
+// #endif
 uint16_t         * motorMoveSpeed[MOTOR_COUNT] =
 {
-  &motorMoveSpeed0, &motorMoveSpeed1, &motorMoveSpeed2/*, &motorMoveSpeed3*/,
-#if MOTOR_COUNT > 4
-  &motorMoveSpeed4, &motorMoveSpeed5, &motorMoveSpeed6, &motorMoveSpeed7
-#endif
+  &motorMoveSpeed0, &motorMoveSpeed1, &motorMoveSpeed2,
 };
 
 volatile boolean nextMoveLoaded;
@@ -450,16 +438,24 @@ void setup()
   #endif
   
   // initialize motor structures
+
+  motors[0].stepPin = 2;
+  // motors[0].dirPin = 3;
+  motors[1].stepPin = 9;
+  // motors[1].dirPin = 10;
+  motors[2].stepPin = 5;
+  // motors[2].dirPin = 6;
+
   for (int i = 0; i < MOTOR_COUNT; i++)
   {
     // setup motor pins - you can customize/modify these after loop
     // default sets step/dir pairs together, with first four motors at 4/5, 6/7, 8/9, 10/11
     // then, for the Mega boards, it jumps to 28/29, 30/31, 32/33, 34/35
-    #if ( PINOUT_VERSION == 2 )
-      motors[i].stepPin = (i * 2) + ( (i < 4) ? 4 : 20 );
-    #elif ( PINOUT_VERSION == 1 )
-      motors[i].stepPin = (i * 2) + ( (i < 4) ? 4 : 14 );
-    #endif
+    // #if ( PINOUT_VERSION == 2 )
+    //   motors[i].stepPin = (i * 2) + ( (i < 4) ? 4 : 20 );
+    // #elif ( PINOUT_VERSION == 1 )
+    //   motors[i].stepPin = (i * 2) + ( (i < 4) ? 4 : 14 );
+    // #endif
     
     
     motors[i].dirPin = motors[i].stepPin + 1;
@@ -473,12 +469,7 @@ void setup()
     setPulsesPerSecond(i, 5000);
   }
 
-    motors[0].stepPin = 2;
-    motors[0].dirPin = 3;
-    motors[1].stepPin = 9;
-    motors[1].dirPin = 10;
-    motors[2].stepPin = 5;
-    motors[2].dirPin = 6;
+  
 
   // set output pins
   for (int i = 0; i < MOTOR_COUNT; i++)
@@ -539,16 +530,15 @@ void setup()
 
   // setup serial connection
   Serial.begin(57600);
-  // setupPanDriver();
   spiDriver.setup_driver(4, 24, 1900, 32, true);
 
-  // lcd.begin_display();
-  // lcd.waiting_info(); //waits for the connection from mobile app or Dragonframe
-  // delay(1000);
+  lcd.begin_display();
+  lcd.waiting_info(); //waits for the connection from mobile app or Dragonframe
+  delay(1000);
 
   sendMessage(MSG_HI, 0);
 
-  // lcd.df_mode_info(DFMOCO_VERSION_STRING);
+  lcd.df_mode_info(DFMOCO_VERSION_STRING);
     
   // SET UP interrupt timer  
   #if defined(BOARD_UNO) || defined(BOARD_MEGA)
