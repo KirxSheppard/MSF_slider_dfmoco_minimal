@@ -1,5 +1,6 @@
 #define DFMOCO_VERSION 1
 #define DFMOCO_VERSION_STRING "1.3.1"
+#define MSFSLIDER_MIN_VERSION_STRING "1.1"
 #include "includes/tmc5160_driver.h"
 #include "includes/lcd_driver.h"
 
@@ -8,6 +9,7 @@ Lcd_driver lcd(0x27, 2, 16);
 
 /*
   DFMoco version 1.3.1
+  MSFslider minimal DF 1.1
   
   Multi-axis motion control.
   For use with the Arc motion control system in Dragonframe 4.
@@ -440,23 +442,14 @@ void setup()
   // initialize motor structures
 
   motors[0].stepPin = 2;
-  // motors[0].dirPin = 3;
   motors[1].stepPin = 9;
-  // motors[1].dirPin = 10;
   motors[2].stepPin = 5;
-  // motors[2].dirPin = 6;
 
   for (int i = 0; i < MOTOR_COUNT; i++)
   {
     // setup motor pins - you can customize/modify these after loop
     // default sets step/dir pairs together, with first four motors at 4/5, 6/7, 8/9, 10/11
     // then, for the Mega boards, it jumps to 28/29, 30/31, 32/33, 34/35
-    // #if ( PINOUT_VERSION == 2 )
-    //   motors[i].stepPin = (i * 2) + ( (i < 4) ? 4 : 20 );
-    // #elif ( PINOUT_VERSION == 1 )
-    //   motors[i].stepPin = (i * 2) + ( (i < 4) ? 4 : 14 );
-    // #endif
-    
     
     motors[i].dirPin = motors[i].stepPin + 1;
     motors[i].dir = true; // forward
@@ -534,11 +527,10 @@ void setup()
 
   lcd.begin_display();
   lcd.waiting_info(); //waits for the connection from mobile app or Dragonframe
+  lcd.msf_ver_info(MSFSLIDER_MIN_VERSION_STRING);
   delay(1000);
 
   sendMessage(MSG_HI, 0);
-
-  lcd.df_mode_info(DFMOCO_VERSION_STRING);
     
   // SET UP interrupt timer  
   #if defined(BOARD_UNO) || defined(BOARD_MEGA)
@@ -1017,6 +1009,7 @@ byte processUserMessage(char data)
     {
       userCmd.command = CMD_HI;
       msgState = MSG_STATE_DONE;
+      lcd.df_mode_info(DFMOCO_VERSION_STRING);
     }
     else if (lastUserData == 'm' && data == 's')
     {

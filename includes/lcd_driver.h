@@ -23,7 +23,9 @@ public:
     void clear_lcd();
     void calib_info();
     void df_mode_info(String dfVersion);
+    void msf_ver_info(String msfVersion);
     void waiting_info();
+    void error_info();
     void live_mode_info();
     void sequence_mode_info();
     void mode_display(char mode);

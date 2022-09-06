@@ -27,6 +27,13 @@ void Lcd_driver::df_mode_info(String dfVersion)
     lcd.print(dfVersion);
 }
 
+void Lcd_driver::msf_ver_info(String msfVersion)
+{
+    lcd.setCursor(0, 1);
+    lcd.print(F("MSF Slider "));
+    lcd.print(msfVersion);
+}
+
 void Lcd_driver::begin_display()
 {
     lcd.begin();
@@ -103,4 +110,10 @@ bool Lcd_driver::tilt_calib_ok(bool calibrated)
         lcd.write(byte(0));
     }
     return calibrated;
+}
+
+void Lcd_driver::error_info()
+{
+    clear_lcd();
+    lcd.print(F("ERROR"));
 }
